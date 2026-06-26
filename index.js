@@ -1,7 +1,10 @@
 //  LITERALS
 // Add libs
 const dayjs = require('dayjs');
-import Chart from 'chart.js';
+import Chart from 'chart.js/auto';
+
+//  Free, no-key exchange-rate API (Frankfurter, the successor of ratesapi.io)
+const API_BASE = 'https://api.frankfurter.dev/v1';
 //  FIRST
 const FIRST_RATE_WRAPPER                = document.querySelector('#first-rate-wrapper');
 const FIRST_CURRENCY_SELECTOR           = document.querySelector('#firstCurrencySelector');
@@ -21,6 +24,7 @@ const SECOND_CANVAS                     = document.querySelector('#secondChart')
 //  OTHER GLOBAL LITERALS
 const GLOBAL_RATIO                      = {};
 const WEEK_STATS                        = [];
+const CHARTS                            = {};
 const CASTLING_ICON                     = document.querySelector('#castlingIcon');
 const CURRENCY_SELECTOR_BUTTONS         = document.querySelectorAll('.currency-selector-button');
 const MODAL_BOX                         = document.querySelector('#modalBox');
@@ -86,7 +90,7 @@ class Requester {
             this.artisan.drawCharts();
         }
         else {
-            const urls = [`https://api.ratesapi.io/api/latest?base=${first}&symbols=${second}`,`https://api.ratesapi.io/api/latest?base=${second}&symbols=${first}`];
+            const urls = [`${API_BASE}/latest?base=${first}&symbols=${second}`,`${API_BASE}/latest?base=${second}&symbols=${first}`];
             Promise.all(urls.map(u => fetch(u)))
             .then(responses => Promise.all(responses.map(res => res.json())))
             .then(objArray => {
@@ -108,7 +112,7 @@ class Requester {
     }
 
     getCurrenciesList() {
-        const url = `https://api.ratesapi.io/api/latest`;
+        const url = `${API_BASE}/latest`;
         fetch(url)
         .then(data => {
             return data.json();
@@ -135,21 +139,21 @@ class Requester {
         const secondDay     = dayjs().subtract(5, 'day').format('YYYY-MM-DD');;
         const firstDay      = dayjs().subtract(6, 'day').format('YYYY-MM-DD');;
         const urls = [
-            `https://api.ratesapi.io/api/${seventhDay}?base=${first}&symbols=${second}`,    
-            `https://api.ratesapi.io/api/${sixthDay}?base=${first}&symbols=${second}`,      
-            `https://api.ratesapi.io/api/${fifthDay}?base=${first}&symbols=${second}`,      
-            `https://api.ratesapi.io/api/${fourthDay}?base=${first}&symbols=${second}`,     
-            `https://api.ratesapi.io/api/${thirdDay}?base=${first}&symbols=${second}`,      
-            `https://api.ratesapi.io/api/${secondDay}?base=${first}&symbols=${second}`,     
-            `https://api.ratesapi.io/api/${firstDay}?base=${first}&symbols=${second}`,      
+            `${API_BASE}/${seventhDay}?base=${first}&symbols=${second}`,
+            `${API_BASE}/${sixthDay}?base=${first}&symbols=${second}`,
+            `${API_BASE}/${fifthDay}?base=${first}&symbols=${second}`,
+            `${API_BASE}/${fourthDay}?base=${first}&symbols=${second}`,
+            `${API_BASE}/${thirdDay}?base=${first}&symbols=${second}`,
+            `${API_BASE}/${secondDay}?base=${first}&symbols=${second}`,
+            `${API_BASE}/${firstDay}?base=${first}&symbols=${second}`,
             /*########################################################################*/
-            `https://api.ratesapi.io/api/${seventhDay}?base=${second}&symbols=${first}`,    
-            `https://api.ratesapi.io/api/${sixthDay}?base=${second}&symbols=${first}`,      
-            `https://api.ratesapi.io/api/${fifthDay}?base=${second}&symbols=${first}`,      
-            `https://api.ratesapi.io/api/${fourthDay}?base=${second}&symbols=${first}`,     
-            `https://api.ratesapi.io/api/${thirdDay}?base=${second}&symbols=${first}`,      
-            `https://api.ratesapi.io/api/${secondDay}?base=${second}&symbols=${first}`,     
-            `https://api.ratesapi.io/api/${firstDay}?base=${second}&symbols=${first}`,      
+            `${API_BASE}/${seventhDay}?base=${second}&symbols=${first}`,
+            `${API_BASE}/${sixthDay}?base=${second}&symbols=${first}`,
+            `${API_BASE}/${fifthDay}?base=${second}&symbols=${first}`,
+            `${API_BASE}/${fourthDay}?base=${second}&symbols=${first}`,
+            `${API_BASE}/${thirdDay}?base=${second}&symbols=${first}`,
+            `${API_BASE}/${secondDay}?base=${second}&symbols=${first}`,
+            `${API_BASE}/${firstDay}?base=${second}&symbols=${first}`,
         ]
         Promise.all(urls.map(u => fetch(u)))
         .then(responses => Promise.all(responses.map(res => res.json())))
@@ -174,13 +178,17 @@ class Extractor {
         const artisan = new Artisan();
         const currencyList = [];
         for(let currencyName in data.rates) {
-            currencyList.push(currencyName);    
+            currencyList.push(currencyName);
         }
-        currencyList.push('EUR');
-        const subList = [];                                                     
-        for (let i = 0; i <Math.ceil(currencyList.length/11); i++){            
-            subList[i] = currencyList.slice((i*11), (i*11) + 11);               
-        }  
+        currencyList.push('EUR');               // EUR is the API base, so it is not listed in rates
+        currencyList.sort();
+        // Split into 3 balanced columns to match the modal layout, regardless
+        // of how many currencies the API currently returns.
+        const perColumn = Math.ceil(currencyList.length / 3);
+        const subList = [];
+        for (let i = 0; i < 3; i++) {
+            subList[i] = currencyList.slice(i * perColumn, (i + 1) * perColumn);
+        }
         artisan.fillModalCurrencyList(subList);
     }
 
@@ -225,15 +233,17 @@ class Artisan {
     }
     
     fillModalCurrencyList(subList) {
-        for(let i = 0; i < 3; i++) {
+        for(let i = 0; i < subList.length; i++) {
             let curr = MODAL_BOX.querySelector(`.column:nth-child(${i+1})`);
-            for(let j = 0; j < 11; j++) {
+            curr.innerHTML = '';    // avoid duplicating rows every time the modal opens
+            for(let j = 0; j < subList[i].length; j++) {
+                const symbol = subList[i][j];
                 let row = document.createElement('div');
                 row.classList.add('row');
-                row.innerHTML = `<div class="desc">${CURRENCY_DESCRIPTION[subList[i][j]]}</div><div class="symbol">${subList[i][j]}</div>`;
+                row.innerHTML = `<div class="desc">${CURRENCY_DESCRIPTION[symbol] || symbol}</div><div class="symbol">${symbol}</div>`;
                 row.addEventListener('click', this.changeFirstSelectButtonContent);
                 curr.appendChild(row);
-            }          
+            }
         }
         LOADER.style.display = 'none';
     }
@@ -294,7 +304,16 @@ class Artisan {
     }
 
     drawCharts() {
-        var firstLineChart = new Chart(FIRST_CANVAS, {
+        // A chart instance must be destroyed before a new one is drawn on the
+        // same canvas, otherwise Chart.js throws "Canvas is already in use".
+        if(CHARTS.first) {
+            CHARTS.first.destroy();
+        }
+        if(CHARTS.second) {
+            CHARTS.second.destroy();
+        }
+
+        CHARTS.first = new Chart(FIRST_CANVAS, {
             type: 'line',
             data: {
                 labels: ['1', '2', '3', '4', '5', '6', '7'],
@@ -307,9 +326,8 @@ class Artisan {
             },
             options: {}
         });
- 
-        console.log(SECOND_CANVAS);
-        var secondLineChart = new Chart(SECOND_CANVAS, {
+
+        CHARTS.second = new Chart(SECOND_CANVAS, {
             type: 'line',
             data: {
                 labels: ['1', '2', '3', '4', '5', '6', '7'],
@@ -362,7 +380,6 @@ const handleCurrencyListButtonClick = (event) => {
 }
 
 const handleSelectorButtonClick = (event) => {
-    console.log(event);
     const selectedBtn = event.currentTarget;
     let currentActiveButton;
     if(selectedBtn.parentElement == FIRST_CURRENCY_SELECTOR) {
@@ -482,4 +499,4 @@ FIRST_CALCULATOR_INPUT.addEventListener('keyup', handleInputTyping);
 SECOND_CALCULATOR_INPUT.addEventListener('keyup', handleInputTyping);
 CURRENCY_SELECTOR_BUTTONS.forEach((element) => element.addEventListener('click', handleSelectorButtonClick));
 CASTLING_ICON.addEventListener('click', handleCastling);
-new Requester().getRate({ first: 'RUB', second: 'USD', from: 2 });
+new Requester().getRate({ first: 'EUR', second: 'USD', from: 2 });

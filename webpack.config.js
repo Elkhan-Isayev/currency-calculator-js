@@ -1,14 +1,17 @@
+const path = require('path');
+
 module.exports = {
-    mode: 'production',
     entry: './index.js',
     output: {
-        filename: './main.minified.js',
-        // change
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'main.minified.js',
+        clean: true,
     },
     module: {
         rules: [
             {
-             test: /\.js$/,
+                test: /\.js$/,
+                exclude: /node_modules/,
                 use: {
                     loader: 'babel-loader',
                     options: {

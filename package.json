@@ -1,32 +1,31 @@
 {
-  "name": "bootcamp-m4-elkhanisayev",
-  "version": "1.0.0",
-  "description": "Currency Converter",
+  "name": "currency-calculator-js",
+  "version": "3.0.0",
+  "description": "Currency Converter — a vanilla JS web app with live exchange rates and weekly charts",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
     "build": "webpack --mode=development",
-    "build:prod": "webpack --config webpack.prod.config.js"
+    "build:prod": "webpack --mode=production"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/IsElxan/bootcamp-m4-elkhanisayev.git"
+    "url": "git+https://github.com/Elkhan-Isayev/currency-calculator-js.git"
   },
   "author": "Elkhan Isayev",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/IsElxan/bootcamp-m4-elkhanisayev/issues"
+    "url": "https://github.com/Elkhan-Isayev/currency-calculator-js/issues"
   },
-  "homepage": "https://github.com/IsElxan/bootcamp-m4-elkhanisayev#readme",
+  "homepage": "https://elkhan-isayev.github.io/currency-calculator-js/",
   "devDependencies": {
-    "@babel/core": "^7.9.0",
-    "@babel/preset-env": "^7.9.5",
-    "babel-loader": "^8.1.0",
-    "webpack": "^4.42.1",
-    "webpack-cli": "^3.3.12"
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "babel-loader": "^9.2.1",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "chart.js": "^2.9.3",
-    "dayjs": "^1.8.24"
+    "chart.js": "^4.4.7",
+    "dayjs": "^1.11.13"
   }
 }
